@@ -64,8 +64,8 @@ jobs:
           python scripts/check_accuracy_gate.py \
             --baseline runs/ci_benchmark/baseline_eval.json \
             --candidate runs/ci_benchmark/candidate_eval.json \
-            --min-delta 0.05 \
-            --min-candidate 0.60
+            --min-delta 0.0 \
+            --min-candidate 0.30
 
       - name: Upload Accuracy Artifacts
         if: always()

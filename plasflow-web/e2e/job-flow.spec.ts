@@ -41,8 +41,9 @@ test.describe('PlasFlow v2 E2E', () => {
     const tsvLink = page.getByRole('link', { name: /^Open TSV Output$/i })
     const reportLink = page.getByRole('link', { name: /^Open HTML Report$/i })
 
-    await expect(tsvLink).toBeVisible()
-    await expect(reportLink).toBeVisible()
+    // Wait for artifact hrefs to be populated (not just '#')
+    await expect(tsvLink).toHaveAttribute('href', /^\/api\//)
+    await expect(reportLink).toHaveAttribute('href', /^\/api\//)
 
     const tsvHref = await tsvLink.getAttribute('href')
     const reportHref = await reportLink.getAttribute('href')
