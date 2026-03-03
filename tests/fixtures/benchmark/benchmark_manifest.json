@@ -1,0 +1,24 @@
+{
+  "name": "benchmark-binary-domain",
+  "random_seed": 42,
+  "min_length": 32,
+  "deduplicate": false,
+  "split": {
+    "split_col": "split",
+    "group_col": "accession",
+    "ratios": {
+      "train": 0.8,
+      "val": 0.1,
+      "test": 0.1
+    }
+  },
+  "sources": [
+    {
+      "name": "benchmark",
+      "path": "benchmark_dataset.tsv",
+      "format": "tsv",
+      "sequence_col": "sequence",
+      "label_col": "label"
+    }
+  ]
+}

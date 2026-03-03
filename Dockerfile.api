@@ -1,0 +1,17 @@
+FROM python:3.11-slim
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1
+
+WORKDIR /app
+
+COPY pyproject.toml README_v2.md /app/
+COPY src /app/src
+COPY models /app/models
+COPY PlasFlow.py /app/PlasFlow.py
+
+RUN pip install --no-cache-dir .
+
+EXPOSE 8080
+
+CMD ["plasflow", "serve", "--host", "0.0.0.0", "--port", "8080"]

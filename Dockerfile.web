@@ -1,0 +1,15 @@
+FROM node:20-alpine
+
+WORKDIR /app
+
+COPY plasflow-web/package.json /app/package.json
+COPY plasflow-web/tsconfig.json /app/tsconfig.json
+COPY plasflow-web/vite.config.ts /app/vite.config.ts
+COPY plasflow-web/index.html /app/index.html
+COPY plasflow-web/src /app/src
+
+RUN npm install
+
+EXPOSE 5173
+
+CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0", "--port", "5173"]

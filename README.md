@@ -1,261 +1,116 @@
-[![Anaconda-Server Badge](https://anaconda.org/smaegol/plasflow/badges/installer/conda.svg)](https://anaconda.org/smaegol/plasflow) [![Anaconda-Server Badge](https://anaconda.org/smaegol/plasflow/badges/platforms.svg)](https://anaconda.org/smaegol/plasflow) [![Anaconda-Server Badge](https://anaconda.org/smaegol/plasflow/badges/downloads.svg)](https://anaconda.org/smaegol/plasflow)
-[![PyPI](https://img.shields.io/pypi/v/plasflow.svg)](https://pypi.org/project/plasflow/1.1.0/)
+# PlasFlow (v1 + v2)
 
-# NOT MAINTAINED
+PlasFlow is a toolkit for classifying metagenomic contigs with backward-compatible v1 behavior and an extended v2 pipeline.
 
-Use at your own risk. I am very grateful that it is being widely used but, as I completely changed my research area I cannot give my time to maintain this project. There are other, newer packages developed, which can be used instead. 
+This repository currently provides:
+- `v1` execution path for legacy compatibility (`PlasFlow.py` wrapper)
+- `v2` Python pipeline with preprocessing, uncertainty reporting, and API/Web workflows
+- tasks: `legacy28`, `binary_domain`, `domain4` (`plasmid/chromosome/phage/ambiguous`)
 
-# PlasFlow 1.1
+## Quick Start
 
-PlasFlow is a set of scripts used for prediction of plasmid sequences in metagenomic contigs. It relies on the neural network models trained on full genome and plasmid sequences and is able to differentiate between plasmids and chromosomes with accuracy reaching 96%. It outperforms other available solutions for plasmids recovery from metagenomes and incorporates the thresholding which allows for exclusion of incertain predictions. PlasFlow has been published in _Nucleic Acids Research_ (https://doi.org/10.1093/nar/gkx1321).
+### 1) Install
 
-# Table of contents
-
-- [News](#news)
-- [Requirements](#requirements)
-- [Installation](#installation)
-
-  - [Conda-based](#conda-based---recommended)
-  - [Pip installer](#pip-installer)
-  - [Manual installation](#manual-installation)
-  - [Perl modules for additional scripts](#perl-modules-for-additional-scripts)
-
-- [Getting started](#getting-started)
-
-- [Output](#output)
-
-- [Test dataset](#test-dataset)
-- [Detailed information](#detailed-information)
-- [Citation](#citation)
-- [TBD](#tbd)
-- [Support](#support)
-
-## News
-
-#### 2018-05-25 Version 1.1 released
-
-New version (1.1) released, which is better suited for large datasets. It can be downloaded from conda and pypi, but the simplest way to upgrade is to replace PlasFlow.py file in you previous installation with the current one.
-If you still encounter problems with the new version, try to use smaller numbers for the `--batch_size` option.
-
-
-## Requirements:
-
-- Python 3.5
-- Python packages:
-
-  - Scikit-learn 0.18.1
-  - Numpy
-  - Pandas
-  - [TensorFlow 0.10.0](https://storage.googleapis.com/tensorflow/linux/cpu/tensorflow-0.10.0rc0-cp35-cp35m-linux_x86_64.whl)
-  - rpy2 >= 2.8
-  - scipy
-  - biopython
-  - dateutil >= 2.5
-
-- R 3.25
-
-- R packages:
-  - [Biostrings](https://bioconductor.org/packages/release/bioc/html/Biostrings.html)
-
-For the perl scripts, especially `filter_sequences_by_length.pl`:
-
-- Perl 5 and modules:
-
-  - Bioperl ([installation instructions](https://bioperl.org/INSTALL.html))
-  - Getopt
-
-
-## Installation
-
-### Conda-based - recommended
-
-Conda is recommended option for installation as it properly resolve all dependencies (including R and Biostrings) and allows for installation without messing with other packages installed. Conda can be used both as the [Anaconda](https://www.anaconda.com/download/), and [Miniconda](https://conda.io/miniconda.html) (which is easier to install and maintain).
-
-After the installation it is required to add [bioconda](https://bioconda.github.io/) channel, required for [Biostrings](https://bioconductor.org/packages/release/bioc/html/Biostrings.html) package installation:
-
-```
-conda config --add channels bioconda
+```bash
+python3 -m venv .venv
+. .venv/bin/activate
+pip install -e '.[dev,train]'
 ```
 
-Sometimes it can be also required to add default conda channel ([conda-forge](https://conda-forge.org/)):
+### 2) Classify
 
-```
-conda config --add channels conda-forge
-```
-
-
-To exclude the possibility of dependencies conflicts its encouraged to create spearate conda environment for Plasflow using command:
-
-```
-conda create --name plasflow python=3.5
+```bash
+plasflow classify \
+  --input test/Citrobacter_freundii_strain_CAV1321_scaffolds.fasta \
+  --output runs/demo/result \
+  --mode v2 \
+  --task legacy28 \
+  --threshold 0.7
 ```
 
-Python 3.5 is required becuase of TensorFlow requirements.
+### 3) Generate report
 
-to activate created environment type:
-
-```
-source activate plasflow
+```bash
+plasflow report --input runs/demo/result.tsv --out runs/demo/result.report.html
 ```
 
-Mac users should install Tensorflow at this step (as osx-64 package is not present in default channels). If you encounter any problems  with missing TensorFlow dependency on other platforms also try to install TF from this source.
+## CLI
 
-```
-conda install -c jjhelmus tensorflow=0.10.0rc0
-```
+```bash
+plasflow classify --input <fasta> --output <prefix> \
+  --mode v1|v2 --task legacy28|binary_domain|domain4 \
+  --read-type short|long|hybrid|complete \
+  --min-length 1000 --coverage-source header|none \
+  --polish none|racon|medaka --threshold 0.7
 
-PlasFlow can be easily installed as an Anaconda package from my Anaconda channel using:
-
-```
-conda install plasflow -c smaegol
-```
-
-With this command all required dependencies are installed into created conda environment. When installation is finished PlasFlow can be invoked as described in the [Getting started](#getting-started) section.
-
-When you decide to finish your work with PlasFlow, you can simply deactivate current anaconda environment with command:
-
-```
-source deactivate
+plasflow train-v2 --dataset-manifest <path> --outdir <dir> --task binary_domain|domain4
+plasflow evaluate-v2 --input <labeled.tsv> --model-dir <dir> --task binary_domain|domain4 --out <eval.json>
+plasflow compare-modes --input <fasta> --outdir <dir> --threshold 0.7 [--ground-truth <labeled.tsv>]
+plasflow tools-check
+plasflow serve --host 0.0.0.0 --port 8080
 ```
 
-### Pip installer
+Compatibility aliases are accepted:
+- `--mode legacy|modern` -> `v1|v2`
+- `train-modern` -> `train-v2`
+- `evaluate-modern` -> `evaluate-v2`
 
-There is a possibility of pip based installation. However, some requirements have to be met:
+## API
 
-1. Python 3.5 is required (due to TensorFlow requirements)
-2. TensorFlow has to be installed manually:
+- `POST /api/v1/jobs` (multipart form)
+  - required: `file`
+  - optional: `mode`, `task`, `threshold`, `read_type`, `min_length`, `coverage_source`, `circularity_check`, `polish`
+- `GET /api/v1/jobs/{job_id}`
+- `GET /api/v1/jobs/{job_id}/artifacts`
+- `GET /api/v1/jobs/{job_id}/download/{artifact_name}`
 
-```
-pip install https://storage.googleapis.com/tensorflow/linux/cpu/tensorflow-0.10.0rc0-cp35-cp35m-linux_x86_64.whl
-```
+## Web
 
-then install PlasFlow with
-
-```
-pip install plasflow
-```
-
-However, models used for prediction have to be downloaded separately (for example using `git clone https://github.com/smaegol/PlasFlow`).
-
-### Manual installation
-
-Of course, PlasFlow repo can be cloned using
-
-```
-git clone https://github.com/smaegol/PlasFlow
+```bash
+cd plasflow-web
+npm install
+npm run dev
 ```
 
-but in that case all dependencies have to be installed manually. TensorFlow can be installed as specified above:
+Default proxy target is `http://localhost:8080`.
 
-```
-pip install https://storage.googleapis.com/tensorflow/linux/cpu/tensorflow-0.10.0rc0-cp35-cp35m-linux_x86_64.whl
-```
+## Outputs
 
-python dependencies can be installed using pip:
+Core outputs:
+- `result.tsv`
+- `result_plasmids.fasta`
+- `result_chromosomes.fasta`
+- `result_unclassified.fasta`
+- `result.report.json`
+- `result.report.html`
 
-```
-pip install numpy pandas scipy rpy2 scikit-learn biopython
-```
+Additional v2/domain4 outputs (when relevant):
+- `result_phage.fasta`
+- `result_ambiguous.fasta`
 
-to install R Biostrings go to <https://bioconductor.org/packages/release/bioc/html/Biostrings.html> and follow instructions therein.
+## Tests
 
-### Perl modules for additional scripts
+```bash
+. .venv/bin/activate
+pytest -q
 
-Perl scripts (like `filter_sequences_by_length.pl`) included with PlasFlow requires few Perl modules. THey can be easily installed using conda:
-
-```
-conda install -c bioconda perl-bioperl perl-getopt-long
-```
-
-or cpan:
-
-```
-cpan -i Bio::Perl Getopt::longer
-```
-
-or any package manager included in your system (apt, brew)
-
-## Getting started
-
-PlasFlow is designed to take a metagenomic assembly and identify contigs which may come from plasmids. It outputs several files, from which the most important is a tabular file containing all predictions (specified with `--output` option).
-
-Prior to the PlasFlow invocation it is highly recommended to filter sequences by length, leaving only those longer than 1000 bp. PlasFlow, similarly to other kmer-based methods, does not perform well on short sequences, as it is hard to get proper kmer coverage from them. Hence, results for short sequences are unreliable. As metagenomic assemblies usually contain large number of short contigs additional filtering test can improve results and speed up the PlasFlow. It can also prevent too high RAM usage.
-
-To filter sequences using provided Perl script type:
-
-```
-filter_sequences_by_length.pl -input input_dataset.fasta -output filtered_output.fasta -thresh sequence_length_threshold
+cd plasflow-web
+npm run build
+npm run e2e:test
 ```
 
-where sequence length threshold have to be provided in base pairs. Filtered fasta file can be then used directly for PlasFlow prediction.
+## Licensing, Copyright, and Provenance
 
+This repository includes and modifies code from the original PlasFlow project:
+- upstream: <https://github.com/smaegol/PlasFlow>
+- original paper: Krawczyk PS, Lipinski L, Dziembowski A. Nucleic Acids Res. 2018;46(6):e35. doi:10.1093/nar/gkx1321
 
-Options available in PlasFlow include:
+The project is distributed under **GNU GPL v3** (see `LICENSE`).
 
-- `--input` - specifies input fasta file with assembly contigs to classify [required]
-- `--output` - a name of the tsv file with the tabular output of classification [required]
-- `--threshold` - manually specified threshold for probability filtering (default = 0.7)
-- `--labels` - manually specified custom location of labels file (used for translation from numeric output to actual class names)
-- `--models` - custom location of models used for prediction (have to be specified if PlasFlow was installed using pip)
-- `--batch_size` - how many sequences can be used in the single batch of kmers frequency calculation
+Practical implications for redistribution of this modified repository:
+- keep the GPLv3 license text and notices
+- keep attribution to the original authors/project
+- distribute corresponding source code for conveyed binaries/images
+- clearly mark that this is a modified version
 
-
-## Output
-
-The most important output of PlasFlow is a tabular file containing all predictions (specified with `--output` option), consiting of several columns including:
-
-contig_id | contig_name | contig_length | id | label | ...
---------- | ----------- | ------------- | -- | ----- | ---
-
-
-where:
-
-- `contig_id`is an internal id of sequence used for the classification
-- `contig_name` is a name of contig used in the classification
-- `contig_length` shows the length of a classified sequence
-- `id` is an internal id of a produced label (classification)
-- `label` is the actual classification
-- `...` represents additional columns showing probabilities of assignment to each possible class
-
-Sequences can be classified to 26 classes including: chromosome.Acidobacteria, chromosome.Actinobacteria, chromosome.Bacteroidetes, chromosome.Chlamydiae, chromosome.Chlorobi, chromosome.Chloroflexi, chromosome.Cyanobacteria, chromosome.DeinococcusThermus, chromosome.Firmicutes, chromosome.Fusobacteria, chromosome.Nitrospirae, chromosome.other, chromosome.Planctomycetes, chromosome.Proteobacteria, chromosome.Spirochaetes, chromosome.Tenericutes, chromosome.Thermotogae, chromosome.Verrucomicrobia, plasmid.Actinobacteria, plasmid.Bacteroidetes, plasmid.Chlamydiae, plasmid.Cyanobacteria, plasmid.DeinococcusThermus, plasmid.Firmicutes, plasmid.Fusobacteria, plasmid.other, plasmid.Proteobacteria, plasmid.Spirochaetes.
-
-If the probability of assignment to given class is lower than threshold (default = 0.7) then the sequence is treated as unclassified.
-
-Additionaly, PlasFlow produces fasta files containing input sequences binned to plasmids, chromosomes and unclassified.
-
-## Test dataset
-
-Test dataset is located in the `test` folder (file `Citrobacter_freundii_strain_CAV1321_scaffolds.fasta`). It is the SPAdes 3.9.1 assembly of Citrobacter freundii strain CAV1321 genome (NCBI assembly ID: GCA_001022155.1), which contains 1 chromosome and 9 plasmids. In the same folder the results of classification can be found in the form of tsv file (`Citrobacter_freundii_strain_CAV1321_scaffolds.fasta.PlasFlow.tsv`) and fasta files containing identified bins (`Citrobacter_freundii_strain_CAV1321_scaffolds.fasta.PlasFlow.tsv_chromosomes.fasta`, `Citrobacter_freundii_strain_CAV1321_scaffolds.fasta.PlasFlow.tsv_plasmids.fasta` and `Citrobacter_freundii_strain_CAV1321_scaffolds.fasta.PlasFlow.tsv_unclassified.fasta`).
-
-To invoke PlasFlow on the test dataset please copy the `test/Citrobacter_freundii_strain_CAV1321_scaffolds.fasta` file to you current working directory and type:
-
-```
-PlasFlow.py --input Citrobacter_freundii_strain_CAV1321_scaffolds.fasta --output test.plasflow_predictions.tsv --threshold 0.7
-```
-The predictions will be located in the `test.plasflow_predictions.tsv` file and can be compared to results available in the `test/Citrobacter_freundii_strain_CAV1321_scaffolds.fasta.PlasFlow.tsv`.
-
-
-## Detailed information
-
-Detailed information concerning the alogrithm and assumptions on which the PlasFlow is based can be found in the publication "_PlasFlow - Predicting Plasmid Sequences in Metagenomic Data Using Genome Signatures_" (_Nucleic Acids Research_, submitted). The flowchart illustrating major steps of training and prediction is shown below
-
-![PlasFlow Flowchart](https://github.com/smaegol/PlasFlow/blob/master/flowchart.png)
-
-All models tested and described in the manuscript can be found in the seperate repository: <https://github.com/smaegol/PlasFlow_models>
-
-Scripts used for the preparation of training dataset and for neural network training are available in the `scripts` subfolder as well in the separate repository: <https://github.com/smaegol/PlasFlow_processing>
-
-## Citation
-
-Please cite the following paper when using PlasFlow for your own research.
-
-> Krawczyk PS, Lipinski L, Dziembowski A.
-> Nucleic Acids Res. 2018 Apr 6;46(6):e35. doi: 10.1093/nar/gkx1321.
-
-## TBD
-
-In next releases we plan to retrain models using the most recent TensorFlow release. During the development of PlasFlow there was a lot of changes in the TensorFlow library and the newest version is not compatible with models trained for TensorFlow. However, retraining requires signficant computational effort and recoding. As we want to include _Archaea_ sequences (which are missed now) in the models, we plan to train new models with the latest TensorFlow version and release new version of PlasFlow in the second part of 2018.
-
-## Support
-
-Any issues connected with the PlasFlow should be addressed to Pawel Krawczyk (p.krawczyk (at) ibb.waw.pl).
+For legal interpretation, consult your legal counsel.

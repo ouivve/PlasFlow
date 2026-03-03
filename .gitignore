@@ -1,0 +1,23 @@
+# macOS
+.DS_Store
+
+# Python
+.venv/
+.pytest_cache/
+__pycache__/
+*.py[cod]
+
+# Runtime outputs
+runs/
+*.log
+
+# Node / frontend build artifacts
+plasflow-web/node_modules/
+plasflow-web/dist/
+plasflow-web/test-results/
+plasflow-web/playwright-report/
+plasflow-web/.vite/
+
+# Coverage / reports
+.coverage
+htmlcov/
