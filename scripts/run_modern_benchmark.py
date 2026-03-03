@@ -45,7 +45,7 @@ def _write_test_artifacts(dataset_manifest: Path, outdir: Path) -> tuple[Path, P
 def _extract_macro_f1(compare_payload: dict) -> float:
     metrics = (
         compare_payload.get("ground_truth_eval", {})
-        .get("modern", {})
+        .get("v2", {})
         .get("metrics", {})
     )
     value = metrics.get("macro_f1")
@@ -88,11 +88,11 @@ def main() -> int:
         "metrics": {
             "binary_domain": {
                 "macro_f1": baseline_macro_f1,
-                "precision_macro": baseline_compare["ground_truth_eval"]["modern"]["metrics"].get("precision_macro"),
-                "recall_macro": baseline_compare["ground_truth_eval"]["modern"]["metrics"].get("recall_macro"),
-                "accuracy": baseline_compare["ground_truth_eval"]["modern"]["metrics"].get("accuracy"),
-                "confusion_matrix": baseline_compare["ground_truth_eval"]["modern"]["metrics"].get("confusion_matrix"),
-                "support": baseline_compare["ground_truth_eval"]["modern"]["metrics"].get("support"),
+                "precision_macro": baseline_compare["ground_truth_eval"]["v2"]["metrics"].get("precision_macro"),
+                "recall_macro": baseline_compare["ground_truth_eval"]["v2"]["metrics"].get("recall_macro"),
+                "accuracy": baseline_compare["ground_truth_eval"]["v2"]["metrics"].get("accuracy"),
+                "confusion_matrix": baseline_compare["ground_truth_eval"]["v2"]["metrics"].get("confusion_matrix"),
+                "support": baseline_compare["ground_truth_eval"]["v2"]["metrics"].get("support"),
             }
         },
     }
